@@ -31,5 +31,8 @@ terraform.rc
 # Ignore log files
 *.log
 
+# Ignore picture files
+*.png
+
 # Enviroment specific files
 .env

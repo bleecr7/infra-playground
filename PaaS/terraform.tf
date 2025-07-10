@@ -5,7 +5,7 @@ terraform {
     organization = "brandon-lee-private-org"
 
     workspaces {
-      name    = "IaaS"
+      name    = "PaaS"
       project = "Personal-Website"
     }
   }
@@ -14,10 +14,6 @@ terraform {
     azurerm = {
       source  = "hashicorp/azurerm"
       version = "~> 4.0"
-    }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.0"
     }
   }
 }
