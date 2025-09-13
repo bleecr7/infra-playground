@@ -15,9 +15,15 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 4.0"
     }
+
     random = {
       source  = "hashicorp/random"
       version = "~> 3.0"
+    }
+
+    tfe = {
+      source  = "hashicorp/tfe"
+      version = "~> 0.30"
     }
   }
 }

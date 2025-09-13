@@ -1,4 +1,9 @@
-output "rg_name" {
+output "domain_name" {
+  description = "The domain name for the DNS zone"
+  value       = azurerm_dns_zone.this.name
+}
+
+output "dns_rg_name" {
   description = "The name of the resource group"
   value       = module.rg.name
 }

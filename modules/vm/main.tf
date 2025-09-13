@@ -6,19 +6,19 @@ resource "azurerm_network_interface" "nic" {
 
   ip_configuration {
     name                          = "internal"
-    subnet_id                    = var.backend_subnet_id
+    subnet_id                     = var.backend_subnet_id
     private_ip_address_allocation = "Dynamic"
   }
 }
 
 resource "azurerm_linux_virtual_machine" "this" {
-  count                    = var.count
-  name                     = "${var.name_prefix}-vm-${count.index}"
-  location                 = var.location
-  resource_group_name      = var.rg_name
-  size                     = var.vm_size
-  network_interface_ids    = [azurerm_network_interface.nic[count.index].id]
-  admin_username           = var.admin_username
+  count                           = var.count
+  name                            = "${var.name_prefix}-vm-${count.index}"
+  location                        = var.location
+  resource_group_name             = var.rg_name
+  size                            = var.vm_size
+  network_interface_ids           = [azurerm_network_interface.nic[count.index].id]
+  admin_username                  = var.admin_username
   disable_password_authentication = true
 
   admin_ssh_key {

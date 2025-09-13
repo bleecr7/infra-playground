@@ -70,7 +70,7 @@ resource "azurerm_network_interface" "web_nic" {
     name                          = "web-nic-configuration"
     subnet_id                     = azurerm_subnet.web_subnet.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id = azurerm_public_ip.web_public_ip.id
+    public_ip_address_id          = azurerm_public_ip.web_public_ip.id
   }
 }
 
@@ -154,3 +154,15 @@ resource "azurerm_virtual_machine_extension" "web_server_install" {
   SETTINGS
 }
 
+data "tfe_outputs" "dns" {
+  organization = "brandon-lee-private-org"
+  workspace    = "core-services"
+}
+
+resource "azurerm_dns_a_record" "web_a_record" {
+  name                = "@"
+  zone_name           = data.tfe_outputs.dns.values.dns_domain_name
+  resource_group_name = data.tfe_outputs.dns.values.dns_rg_name
+  records             = [azurerm_public_ip.web_public_ip.ip_address]
+  ttl                 = 300
+}

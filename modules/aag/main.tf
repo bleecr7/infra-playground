@@ -74,6 +74,6 @@ resource "azurerm_application_gateway" "network" {
 
 # Connect the security group to the network interface
 resource "azurerm_subnet_network_security_group_association" "ag_subnet_NSG" {
-  subnet_id = azurerm_subnet.ag_subnet.id
+  subnet_id                 = azurerm_subnet.ag_subnet.id
   network_security_group_id = azurerm_network_security_group.ag_nsg.id
 }
