@@ -10,3 +10,11 @@ output "dns_domain_name" {
 output "dns_rg_name" {
   value = module.dns.dns_rg_name
 }
+
+output "bastion_rg_name" {
+  value = module.bastion.bastion_rg_name
+}
+
+output "bastion_name" {
+  value = module.bastion.bastion_name 
+}

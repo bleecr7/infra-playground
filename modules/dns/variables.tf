@@ -6,6 +6,7 @@ variable "domain_name" {
 variable "infra_type" {
   description = "The name of the resource group to create."
   type        = string
+  default = "dns-zone"
 }
 
 variable "rg_location" {

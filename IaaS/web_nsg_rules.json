@@ -7,7 +7,7 @@
     "protocol": "*",
     "source_port_range": "*",
     "destination_port_range": "3389",
-    "source_address_prefix": "*",
+    "source_address_prefix": "AzureBastion",
     "destination_address_prefix": "*"
   },
   {
