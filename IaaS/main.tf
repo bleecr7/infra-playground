@@ -37,6 +37,17 @@ resource "azurerm_subnet" "ag_subnet" {
 locals {
   web_nsg_rules = [
     {
+      name                       = "RDP"
+      priority                   = 1000
+      direction                  = "Inbound"
+      access                     = "Allow"
+      protocol                   = "*"
+      source_port_range          = "*"
+      destination_port_range     = "3389"
+      source_address_prefix      = "*"
+      destination_address_prefix = "*"
+    },
+    {
       name                       = "web-http"
       priority                   = 1001
       direction                  = "Inbound"
@@ -100,60 +111,35 @@ resource "azurerm_public_ip" "web_public_ip" {
   allocation_method   = "Static"
 }
 
-# Create network interface
-resource "azurerm_network_interface" "web_nic" {
-  name                = "web-nic"
-  location            = var.rg_location
-  resource_group_name = module.iaas_rg.name
-
-  ip_configuration {
-    name                          = "web-nic-configuration"
-    subnet_id                     = azurerm_subnet.web_subnet.id
-    private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.web_public_ip.id
-  }
+# Create VMs
+module "web_vms" {
+  source          = "./../modules/vm/windows"
+  infra_type      = "web"
+  vm_count        = var.windows_vm_count
+  rg_name         = module.iaas_rg.name
+  rg_location     = var.rg_location
+  admin_password  = var.admin_password
+  subnet_id       = azurerm_subnet.web_subnet.id
+  public_ip_ids   = [for i in range(var.windows_vm_count) : azurerm_public_ip.web_public_ip.id]
+  storage_account = azurerm_storage_account.web_storage_account
+  vm_priority     = "Spot"
+  eviction_policy = "Deallocate"
 }
 
-# Connect the security group to the network interface
+# # Connect the security group to the network interface
 resource "azurerm_network_interface_security_group_association" "web_pub_IP_NSG" {
-  network_interface_id      = azurerm_network_interface.web_nic.id
+  depends_on                = [module.web_vms]
+  count                     = var.windows_vm_count
+  network_interface_id      = module.web_vms.vm_info[count.index].nic_ids[0]
   network_security_group_id = module.web_nsg.nsg_id
-}
-
-# Create virtual machine
-resource "azurerm_windows_virtual_machine" "web_vm" {
-  name                  = "web-vm"
-  admin_username        = "azureuser"
-  admin_password        = var.admin_password
-  location              = var.rg_location
-  resource_group_name   = module.iaas_rg.name
-  network_interface_ids = [azurerm_network_interface.web_nic.id]
-  size                  = "Standard_DS1_v2"
-
-  os_disk {
-    name                 = "webOSDisk"
-    caching              = "ReadWrite"
-    storage_account_type = "Premium_LRS"
-  }
-
-  source_image_reference {
-    publisher = "MicrosoftWindowsServer"
-    offer     = "WindowsServer"
-    sku       = "2022-datacenter-azure-edition"
-    version   = "latest"
-  }
-
-  boot_diagnostics {
-    storage_account_uri = azurerm_storage_account.web_storage_account.primary_blob_endpoint
-  }
-
-  provision_vm_agent = true
 }
 
 # Install IIS web server to the virtual machine
 resource "azurerm_virtual_machine_extension" "web_server_install" {
-  name                       = "web-VM-wsi"
-  virtual_machine_id         = azurerm_windows_virtual_machine.web_vm.id
+  depends_on                 = [module.web_vms]
+  count                      = var.windows_vm_count
+  name                       = "web-VM-wsi-ext-${count.index}"
+  virtual_machine_id         = module.web_vms.vm_info[count.index].id
   publisher                  = "Microsoft.Compute"
   type                       = "CustomScriptExtension"
   type_handler_version       = "1.8"

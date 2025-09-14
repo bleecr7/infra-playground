@@ -17,12 +17,8 @@ output "nsg_name" {
 output "nsg_rules" {
   value = module.web_nsg.security_rules
 }
-output "web_public_ip" {
-  value = azurerm_public_ip.web_public_ip.ip_address
-}
-
-output "web_private_ip" {
-  value = azurerm_network_interface.web_nic.private_ip_address
+output "vm_info" {
+  value = module.web_vms.vm_info
 }
 
 output "web_a_record_fqdn" {
