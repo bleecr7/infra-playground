@@ -35,41 +35,8 @@ resource "azurerm_subnet" "ag_subnet" {
 
 # Create Network Security Group and rules
 locals {
-  web_nsg_rules = [
-    {
-      name                       = "RDP"
-      priority                   = 1000
-      direction                  = "Inbound"
-      access                     = "Allow"
-      protocol                   = "*"
-      source_port_range          = "*"
-      destination_port_range     = "3389"
-      source_address_prefix      = "*"
-      destination_address_prefix = "*"
-    },
-    {
-      name                       = "web-http"
-      priority                   = 1001
-      direction                  = "Inbound"
-      access                     = "Allow"
-      protocol                   = "Tcp"
-      source_port_range          = "*"
-      destination_port_range     = "80"
-      source_address_prefix      = "*"
-      destination_address_prefix = "*"
-    },
-    {
-      name                       = "web-https"
-      priority                   = 1002
-      direction                  = "Inbound"
-      access                     = "Allow"
-      protocol                   = "Tcp"
-      source_port_range          = "*"
-      destination_port_range     = "443"
-      source_address_prefix      = "*"
-      destination_address_prefix = "*"
-    }
-  ]
+  security_rules_json = file("./web_nsg_rules.json")
+  security_rules      = jsondecode(local.security_rules_json)
 }
 
 module "web_nsg" {
@@ -77,7 +44,7 @@ module "web_nsg" {
   infra_type     = "web"
   rg_name        = module.network_rg.name
   rg_location    = var.rg_location
-  security_rules = local.web_nsg_rules
+  security_rules = local.security_rules
 }
 
 # Create storage resource group
