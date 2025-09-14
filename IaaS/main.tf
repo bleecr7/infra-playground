@@ -1,70 +1,110 @@
-# Create resource group
-module "rg" {
-  source      = "./../modules/rg"
-  rg_location = var.rg_location
-  infra_type  = var.infra_type
-}
-
+# Generate random ID for unique naming
 module "random_id" {
   source = "./../modules/random"
 }
 
+# Create network resource group
+module "network_rg" {
+  source      = "./../modules/rg"
+  rg_location = var.rg_location
+  infra_type  = "network"
+}
+
 # Create virtual network
-resource "azurerm_virtual_network" "TF_vnet" {
-  name                = "${var.infra_type}-vnet"
-  address_space       = ["10.0.0.0/16"]
-  location            = module.rg.location
-  resource_group_name = module.rg.name
+module "web_vnet" {
+  source        = "./../modules/networks/vnet"
+  rg_name       = module.network_rg.name
+  rg_location   = var.rg_location
+  address_space = ["10.0.0.0/16"]
 }
 
 # Create subnet
 resource "azurerm_subnet" "web_subnet" {
   name                 = "web-subnet"
-  resource_group_name  = module.rg.name
-  virtual_network_name = azurerm_virtual_network.TF_vnet.name
+  resource_group_name  = module.network_rg.name
+  virtual_network_name = module.web_vnet.network_name
   address_prefixes     = ["10.0.1.0/24"]
 }
 
 resource "azurerm_subnet" "ag_subnet" {
   name                 = "ag-subnet"
-  resource_group_name  = module.rg.name
-  virtual_network_name = azurerm_virtual_network.TF_vnet.name
+  resource_group_name  = module.network_rg.name
+  virtual_network_name = module.web_vnet.network_name
   address_prefixes     = ["10.0.0.0/24"]
 }
 
 # Create Network Security Group and rules
-resource "azurerm_network_security_group" "ag_nsg" {
-  name                = "ag-nsg"
-  location            = module.rg.location
-  resource_group_name = module.rg.name
+locals {
+  web_nsg_rules = [
+    {
+      name                       = "web-http"
+      priority                   = 1001
+      direction                  = "Inbound"
+      access                     = "Allow"
+      protocol                   = "Tcp"
+      source_port_range          = "*"
+      destination_port_range     = "80"
+      source_address_prefix      = "*"
+      destination_address_prefix = "*"
+    },
+    {
+      name                       = "web-https"
+      priority                   = 1002
+      direction                  = "Inbound"
+      access                     = "Allow"
+      protocol                   = "Tcp"
+      source_port_range          = "*"
+      destination_port_range     = "443"
+      source_address_prefix      = "*"
+      destination_address_prefix = "*"
+    }
+  ]
+}
 
-  security_rule {
-    name                       = "web"
-    priority                   = 1001
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "80"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
+module "web_nsg" {
+  source         = "./../modules/networks/nsg"
+  infra_type     = "web"
+  rg_name        = module.network_rg.name
+  rg_location    = var.rg_location
+  security_rules = local.web_nsg_rules
+}
+
+# Create storage resource group
+module "storage_rg" {
+  source      = "./../modules/rg"
+  rg_location = var.rg_location
+  infra_type  = "storage"
 }
 
 # Create storage account for boot diagnostics
 resource "azurerm_storage_account" "web_storage_account" {
   name                     = "webstorage${module.random_id.random_id}"
   location                 = var.rg_location
-  resource_group_name      = module.rg.name
+  resource_group_name      = module.storage_rg.name
   account_tier             = "Standard"
   account_replication_type = "LRS"
+}
+
+# Create VM resource group
+module "iaas_rg" {
+  source      = "./../modules/rg"
+  rg_location = var.rg_location
+  infra_type  = var.infra_type
+}
+
+# Create public IPs
+resource "azurerm_public_ip" "web_public_ip" {
+  name                = "web-public-ip"
+  location            = var.rg_location
+  resource_group_name = module.iaas_rg.name
+  allocation_method   = "Static"
 }
 
 # Create network interface
 resource "azurerm_network_interface" "web_nic" {
   name                = "web-nic"
   location            = var.rg_location
-  resource_group_name = module.rg.name
+  resource_group_name = module.iaas_rg.name
 
   ip_configuration {
     name                          = "web-nic-configuration"
@@ -74,39 +114,11 @@ resource "azurerm_network_interface" "web_nic" {
   }
 }
 
-# Create Network Security Group and rules
-resource "azurerm_network_security_group" "web_nsg" {
-  name                = "web-nsg"
-  location            = module.rg.location
-  resource_group_name = module.rg.name
-
-  security_rule {
-    name                       = "web"
-    priority                   = 1001
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "80"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-}
-
-# Create public IPs
-resource "azurerm_public_ip" "web_public_ip" {
-  name                = "web-public-ip"
-  location            = var.rg_location
-  resource_group_name = module.rg.name
-  allocation_method   = "Static"
-}
-
 # Connect the security group to the network interface
 resource "azurerm_network_interface_security_group_association" "web_pub_IP_NSG" {
   network_interface_id      = azurerm_network_interface.web_nic.id
-  network_security_group_id = azurerm_network_security_group.web_nsg.id
+  network_security_group_id = module.web_nsg.nsg_id
 }
-
 
 # Create virtual machine
 resource "azurerm_windows_virtual_machine" "web_vm" {
@@ -114,7 +126,7 @@ resource "azurerm_windows_virtual_machine" "web_vm" {
   admin_username        = "azureuser"
   admin_password        = var.admin_password
   location              = var.rg_location
-  resource_group_name   = module.rg.name
+  resource_group_name   = module.iaas_rg.name
   network_interface_ids = [azurerm_network_interface.web_nic.id]
   size                  = "Standard_DS1_v2"
 
