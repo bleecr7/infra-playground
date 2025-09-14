@@ -13,3 +13,7 @@ output "bastion_id" {
 output "bastion_vnet" {
   value = module.bastion_vnet.network_name
 }
+
+output "bastion_vnet_id" {
+  value = module.bastion_vnet.network_id
+}

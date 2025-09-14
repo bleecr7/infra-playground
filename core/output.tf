@@ -18,3 +18,11 @@ output "bastion_rg_name" {
 output "bastion_name" {
   value = module.bastion.bastion_name 
 }
+
+output "bastion_vnet" {
+  value = module.bastion.bastion_vnet
+}
+
+output "bastion_vnet_id" {
+  value = module.bastion.bastion_vnet_id
+}
