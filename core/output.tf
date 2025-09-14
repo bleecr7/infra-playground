@@ -11,18 +11,11 @@ output "dns_rg_name" {
   value = module.dns.dns_rg_name
 }
 
-output "bastion_rg_name" {
-  value = module.bastion.bastion_rg_name
-}
-
-output "bastion_name" {
-  value = module.bastion.bastion_name 
-}
-
-output "bastion_vnet" {
-  value = module.bastion.bastion_vnet
-}
-
-output "bastion_vnet_id" {
-  value = module.bastion.bastion_vnet_id
+output "bastion_info" {
+  value = {
+    "name"    = module.bastion.bastion_name
+    "vnet"    = module.bastion.bastion_vnet
+    "vnet_id" = module.bastion.bastion_vnet_id
+    "rg_name" = module.bastion.bastion_rg_name
+  }
 }

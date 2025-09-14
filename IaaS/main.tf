@@ -10,12 +10,33 @@ module "network_rg" {
   infra_type  = "network"
 }
 
-# Create virtual network
+# Create VM virtual network
 module "web_vnet" {
   source        = "./../modules/networks/vnet"
   rg_name       = module.network_rg.name
   rg_location   = var.rg_location
   address_space = ["10.0.0.0/16"]
+}
+
+# Get Bastion Info
+data "tfe_outputs" "bastion_info" {
+  organization = "brandon-lee-private-org"
+  workspace    = "core-services"
+}
+
+# Peer Bastion VNet with Web VNet
+resource "azurerm_virtual_network_peering" "bastion_to_web" {
+  name                      = "bastion-to-web"
+  resource_group_name       = data.tfe_outputs.bastion_info.values.bastion_rg_name
+  virtual_network_name      = data.tfe_outputs.bastion_info.values.bastion_vnet
+  remote_virtual_network_id = module.web_vnet.network_id
+}
+
+resource "azurerm_virtual_network_peering" "web_to_bastion" {
+  name                      = "web-to-bastion"
+  resource_group_name       = module.network_rg.name
+  virtual_network_name      = module.web_vnet.network_name
+  remote_virtual_network_id = data.tfe_outputs.bastion_info.values.bastion_vnet_id
 }
 
 # Create subnet
@@ -90,6 +111,7 @@ resource "azurerm_dns_a_record" "web_a_record" {
   records             = [azurerm_public_ip.web_public_ip.ip_address]
   ttl                 = 300
 }
+
 
 # Create Linux VMs
 module "web_vms" {

@@ -5,6 +5,6 @@ module "dns" {
 }
 
 module "bastion" {
-  source                = "./../modules/networks/bastion"
-  rg_location           = var.rg_location
+  source      = "./../modules/networks/bastion"
+  rg_location = var.rg_location
 }
