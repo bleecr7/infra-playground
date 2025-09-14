@@ -36,3 +36,6 @@ terraform.rc
 
 # Enviroment specific files
 .env
+
+# Local files
+*.DS_Store

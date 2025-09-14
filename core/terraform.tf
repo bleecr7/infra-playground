@@ -5,7 +5,7 @@ terraform {
     organization = "brandon-lee-private-org"
 
     workspaces {
-      name    = "IaaS"
+      name    = "core-services"
       project = "Personal-Website"
     }
   }
