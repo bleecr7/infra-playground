@@ -35,7 +35,7 @@ resource "azurerm_subnet" "ag_subnet" {
 
 # Create Network Security Group and rules
 locals {
-  security_rules_json = file("./web_nsg_rules.json")
+  security_rules_json = file("./web_nsg_rules_linux.json")
   security_rules      = jsondecode(local.security_rules_json)
 }
 
@@ -78,47 +78,6 @@ resource "azurerm_public_ip" "web_public_ip" {
   allocation_method   = "Static"
 }
 
-# Create VMs
-module "web_vms" {
-  source          = "./../modules/vm/windows"
-  infra_type      = "web"
-  vm_count        = var.windows_vm_count
-  rg_name         = module.iaas_rg.name
-  rg_location     = var.rg_location
-  admin_password  = var.admin_password
-  subnet_id       = azurerm_subnet.web_subnet.id
-  public_ip_ids   = [for i in range(var.windows_vm_count) : azurerm_public_ip.web_public_ip.id]
-  storage_account = azurerm_storage_account.web_storage_account
-  vm_priority     = "Spot"
-  eviction_policy = "Deallocate"
-}
-
-# # Connect the security group to the network interface
-resource "azurerm_network_interface_security_group_association" "web_pub_IP_NSG" {
-  depends_on                = [module.web_vms]
-  count                     = var.windows_vm_count
-  network_interface_id      = module.web_vms.vm_info[count.index].nic_ids[0]
-  network_security_group_id = module.web_nsg.nsg_id
-}
-
-# Install IIS web server to the virtual machine
-resource "azurerm_virtual_machine_extension" "web_server_install" {
-  depends_on                 = [module.web_vms]
-  count                      = var.windows_vm_count
-  name                       = "web-VM-wsi-ext-${count.index}"
-  virtual_machine_id         = module.web_vms.vm_info[count.index].id
-  publisher                  = "Microsoft.Compute"
-  type                       = "CustomScriptExtension"
-  type_handler_version       = "1.8"
-  auto_upgrade_minor_version = true
-
-  settings = <<SETTINGS
-    {
-      "commandToExecute": "powershell -ExecutionPolicy Unrestricted Install-WindowsFeature -Name Web-Server -IncludeManagementTools"
-    }
-  SETTINGS
-}
-
 data "tfe_outputs" "dns" {
   organization = "brandon-lee-private-org"
   workspace    = "core-services"
@@ -131,3 +90,65 @@ resource "azurerm_dns_a_record" "web_a_record" {
   records             = [azurerm_public_ip.web_public_ip.ip_address]
   ttl                 = 300
 }
+
+# Create Linux VMs
+module "web_vms" {
+  source          = "./../modules/vm/linux"
+  infra_type      = "web"
+  vm_count        = var.unix_vm_count
+  rg_name         = module.iaas_rg.name
+  rg_location     = var.rg_location
+  admin_password  = var.admin_password
+  subnet_id       = azurerm_subnet.web_subnet.id
+  public_ip_ids   = var.unix_vm_count > 0 ? [for i in range(var.unix_vm_count) : azurerm_public_ip.web_public_ip.id] : null
+  storage_account = azurerm_storage_account.web_storage_account
+}
+
+# Connect the security group to the network interface
+resource "azurerm_network_interface_security_group_association" "web_pub_IP_NSG" {
+  depends_on                = [module.web_vms]
+  count                     = var.unix_vm_count
+  network_interface_id      = module.web_vms.vm_info[count.index].nic_ids[0]
+  network_security_group_id = module.web_nsg.nsg_id
+}
+
+# # Create Windows VMs
+# module "web_vms" {
+#   source          = "./../modules/vm/windows"
+#   infra_type      = "web"
+#   vm_count        = var.windows_vm_count
+#   rg_name         = module.iaas_rg.name
+#   rg_location     = var.rg_location
+#   admin_password  = var.admin_password
+#   subnet_id       = azurerm_subnet.web_subnet.id
+#   public_ip_ids   = [for i in range(var.windows_vm_count) : azurerm_public_ip.web_public_ip.id]
+#   storage_account = azurerm_storage_account.web_storage_account
+#   vm_priority     = "Spot"
+#   eviction_policy = "Deallocate"
+# }
+
+# # # Connect the security group to the network interface
+# resource "azurerm_network_interface_security_group_association" "web_pub_IP_NSG" {
+#   depends_on                = [module.web_vms]
+#   count                     = var.windows_vm_count
+#   network_interface_id      = module.web_vms.vm_info[count.index].nic_ids[0]
+#   network_security_group_id = module.web_nsg.nsg_id
+# }
+
+# # Install IIS web server to the virtual machine
+# resource "azurerm_virtual_machine_extension" "web_server_install" {
+#   depends_on                 = [module.web_vms]
+#   count                      = var.windows_vm_count
+#   name                       = "web-VM-wsi-ext-${count.index}"
+#   virtual_machine_id         = module.web_vms.vm_info[count.index].id
+#   publisher                  = "Microsoft.Compute"
+#   type                       = "CustomScriptExtension"
+#   type_handler_version       = "1.8"
+#   auto_upgrade_minor_version = true
+
+#   settings = <<SETTINGS
+#     {
+#       "commandToExecute": "powershell -ExecutionPolicy Unrestricted Install-WindowsFeature -Name Web-Server -IncludeManagementTools"
+#     }
+#   SETTINGS
+# }
