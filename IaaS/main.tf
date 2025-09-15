@@ -3,69 +3,10 @@ module "random_id" {
   source = "./../modules/random"
 }
 
-# Create network resource group
-module "network_rg" {
-  source      = "./../modules/rg"
-  rg_location = var.rg_location
-  infra_type  = "network"
-}
-
-# Create VM virtual network
-module "web_vnet" {
-  source        = "./../modules/networks/vnet"
-  rg_name       = module.network_rg.name
-  rg_location   = var.rg_location
-  address_space = ["10.0.0.0/16"]
-}
-
-# Get Bastion Info
-data "tfe_outputs" "bastion_info" {
+# Get core services info
+data "tfe_outputs" "core_services" {
   organization = "brandon-lee-private-org"
   workspace    = "core-services"
-}
-
-# Peer Bastion VNet with Web VNet
-resource "azurerm_virtual_network_peering" "bastion_to_web" {
-  name                      = "bastion-to-web"
-  resource_group_name       = data.tfe_outputs.bastion_info.values.bastion_rg_name
-  virtual_network_name      = data.tfe_outputs.bastion_info.values.bastion_vnet
-  remote_virtual_network_id = module.web_vnet.network_id
-}
-
-resource "azurerm_virtual_network_peering" "web_to_bastion" {
-  name                      = "web-to-bastion"
-  resource_group_name       = module.network_rg.name
-  virtual_network_name      = module.web_vnet.network_name
-  remote_virtual_network_id = data.tfe_outputs.bastion_info.values.bastion_vnet_id
-}
-
-# Create subnet
-resource "azurerm_subnet" "web_subnet" {
-  name                 = "web-subnet"
-  resource_group_name  = module.network_rg.name
-  virtual_network_name = module.web_vnet.network_name
-  address_prefixes     = ["10.0.1.0/24"]
-}
-
-resource "azurerm_subnet" "ag_subnet" {
-  name                 = "ag-subnet"
-  resource_group_name  = module.network_rg.name
-  virtual_network_name = module.web_vnet.network_name
-  address_prefixes     = ["10.0.0.0/24"]
-}
-
-# Create Network Security Group and rules
-locals {
-  security_rules_json = file("./web_nsg_rules_linux.json")
-  security_rules      = jsondecode(local.security_rules_json)
-}
-
-module "web_nsg" {
-  source         = "./../modules/networks/nsg"
-  infra_type     = "web"
-  rg_name        = module.network_rg.name
-  rg_location    = var.rg_location
-  security_rules = local.security_rules
 }
 
 # Create storage resource group
@@ -91,27 +32,36 @@ module "iaas_rg" {
   infra_type  = var.infra_type
 }
 
+# Create Network Security Group and rules
+locals {
+  security_rules_json = file("./web_nsg_rules_linux.json")
+  security_rules      = jsondecode(local.security_rules_json)
+}
+
+module "web_nsg" {
+  source         = "./../modules/networks/nsg"
+  infra_type     = "web"
+  rg_name        = module.iaas_rg.name
+  rg_location    = var.rg_location
+  security_rules = local.security_rules
+}
+
 # Create public IPs
 resource "azurerm_public_ip" "web_public_ip" {
-  name                = "web-public-ip"
+  count               = var.unix_vm_count
+  name                = "web-public-ip-${count.index}"
   location            = var.rg_location
   resource_group_name = module.iaas_rg.name
   allocation_method   = "Static"
 }
 
-data "tfe_outputs" "dns" {
-  organization = "brandon-lee-private-org"
-  workspace    = "core-services"
-}
-
 resource "azurerm_dns_a_record" "web_a_record" {
   name                = "@"
-  zone_name           = data.tfe_outputs.dns.values.dns_domain_name
-  resource_group_name = data.tfe_outputs.dns.values.dns_rg_name
-  records             = [azurerm_public_ip.web_public_ip.ip_address]
+  zone_name           = data.tfe_outputs.core_services.values.dns_info["domain_name"]
+  resource_group_name = data.tfe_outputs.core_services.values.dns_info["rg_name"]
+  records             = [azurerm_public_ip.web_public_ip[0].ip_address]
   ttl                 = 300
 }
-
 
 # Create Linux VMs
 module "web_vms" {
@@ -121,8 +71,8 @@ module "web_vms" {
   rg_name         = module.iaas_rg.name
   rg_location     = var.rg_location
   admin_password  = var.admin_password
-  subnet_id       = azurerm_subnet.web_subnet.id
-  public_ip_ids   = var.unix_vm_count > 0 ? [for i in range(var.unix_vm_count) : azurerm_public_ip.web_public_ip.id] : null
+  subnet_id       = data.tfe_outputs.core_services.values.iaas_subnets["web-subnet"].id
+  public_ip_ids   = var.unix_vm_count > 0 ? [for i in range(var.unix_vm_count) : azurerm_public_ip.web_public_ip[i].id] : null
   storage_account = azurerm_storage_account.web_storage_account
 }
 

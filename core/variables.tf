@@ -9,3 +9,19 @@ variable "rg_location" {
   type        = string
   default     = "uksouth"
 }
+
+variable "infra_type" {
+  description = "The type of infrastructure to deploy (e.g., 'web', 'app', 'db')."
+  type        = string
+}
+
+variable "iaas_vnet_address_space" {
+  description = "The address space for the IaaS virtual network."
+  type        = list(string)
+}
+
+variable "iaas_subnets_map" {
+  description = "A map of subnets for each virtual network."
+  type        = map(list(string))
+
+}

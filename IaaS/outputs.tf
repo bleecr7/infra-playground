@@ -2,14 +2,6 @@ output "iaas_rg_name" {
   value = module.iaas_rg.name
 }
 
-output "network_rg_name" {
-  value = module.network_rg.name
-}
-
-output "vnet_name" {
-  value = module.web_vnet.network_name
-}
-
 output "nsg_name" {
   value = module.web_nsg.nsg_name
 }
@@ -23,5 +15,5 @@ output "web_a_record_fqdn" {
 }
 
 output "public_ip_address" {
-  value = azurerm_public_ip.web_public_ip.ip_address
+  value = azurerm_public_ip.web_public_ip.*.ip_address
 }
