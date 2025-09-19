@@ -15,6 +15,13 @@ output "bastion_info" {
   }
 }
 
+output "key_vault_info" {
+  value = {
+    name    = azurerm_key_vault.key_vault.name,
+    id      = azurerm_key_vault.key_vault.id,
+  }
+}
+
 output "iaas_vnet_info" {
   value = var.iaas_deploy == 1 ? {
     name          = module.iaas_vnet[0].network_name,

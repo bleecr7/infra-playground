@@ -34,3 +34,15 @@ variable "paas_deploy" {
   description = "Flag to indicate if PaaS resources should be deployed (1 for yes, 0 for no)."
   type        = number
 }
+
+variable "tls_cert" {
+  description = "The TLS certificate in PFX format, base64 encoded."
+  type        = string
+  sensitive   = true
+}
+
+variable "tls_cert_password" {
+  description = "The password for the TLS certificate."
+  type        = string
+  sensitive   = true
+}
