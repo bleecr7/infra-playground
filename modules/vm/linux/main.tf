@@ -18,7 +18,7 @@ resource "azurerm_linux_virtual_machine" "this" {
   location              = var.rg_location
   resource_group_name   = var.rg_name
   network_interface_ids = [azurerm_network_interface.nic[count.index].id]
-  size                  = "Standard_DS1_v2"
+  size                  = "Standard_D2s_v3"
 
   admin_username                  = "azureuser"
   admin_password                  = var.admin_password

@@ -20,7 +20,7 @@ resource "azurerm_windows_virtual_machine" "this" {
   location              = var.rg_location
   resource_group_name   = var.rg_name
   network_interface_ids = [azurerm_network_interface.nic[count.index].id]
-  size                  = "Standard_DS1_v2"
+  size                  = "Standard_D2s_v3"
 
   os_disk {
     name                 = "webOSDisk"

@@ -15,21 +15,28 @@ output "bastion_info" {
   }
 }
 
-output "iaas_vnet_info" {
+output "key_vault_info" {
   value = {
-    name          = module.iaas_vnet.network_name,
-    id            = module.iaas_vnet.network_id,
-    address_space = module.iaas_vnet.network_address_space,
-    rg_name       = module.network_rg.name,
+    name    = azurerm_key_vault.key_vault.name,
+    id      = azurerm_key_vault.key_vault.id,
   }
 }
 
+output "iaas_vnet_info" {
+  value = var.iaas_deploy == 1 ? {
+    name          = module.iaas_vnet[0].network_name,
+    id            = module.iaas_vnet[0].network_id,
+    address_space = module.iaas_vnet[0].network_address_space,
+    rg_name       = module.network_rg.name,
+  } : null
+}
+
 output "iaas_subnets" {
-  value = {
+  value = var.iaas_deploy == 1 ? {
     for subnet in azurerm_subnet.iaas_subnets :
     subnet.name => {
-      id              = subnet.id,
+      id             = subnet.id,
       address_prefix = subnet.address_prefixes,
     }
-  }
+  } : null
 }
