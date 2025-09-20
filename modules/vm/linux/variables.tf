@@ -81,6 +81,15 @@ variable "admin_password" {
   sensitive   = true
 }
 
+variable "admin_ssh_key" {
+  description = "The SSH public key for the administrator user."
+  type        = string
+  validation {
+    condition     = length(var.admin_ssh_key) > 0
+    error_message = "The admin SSH key must not be empty."
+  }
+}
+
 variable "subnet_id" {
   description = "The ID of the subnet where the network interface will be created."
   type        = string

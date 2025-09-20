@@ -17,8 +17,13 @@ module "random_id" {
   source = "./../modules/random"
 }
 
-# Get current Azure client configuration
+# get current Azure client configuration
 data "azurerm_client_config" "current" {}
+
+# Get Azure Terraform service principal configuration
+data "azuread_service_principal" "current" {
+  display_name = "HCP Terraform"
+}
 
 # Create Key Vault
 resource "azurerm_key_vault" "key_vault" {
@@ -30,59 +35,18 @@ resource "azurerm_key_vault" "key_vault" {
   soft_delete_retention_days  = 7
   purge_protection_enabled    = false
 
-  sku_name = "standard"
-
-  access_policy {
-    tenant_id = data.azurerm_client_config.current.tenant_id
-    object_id = data.azurerm_client_config.current.object_id
-
-    certificate_permissions = [
-      "Create",
-      "Delete",
-      "DeleteIssuers",
-      "Get",
-      "GetIssuers",
-      "Import",
-      "List",
-      "ListIssuers",
-      "ManageContacts",
-      "ManageIssuers",
-      "SetIssuers",
-      "Update",
-    ]
-
-    key_permissions = [
-      "Backup",
-      "Create",
-      "Decrypt",
-      "Delete",
-      "Encrypt",
-      "Get",
-      "Import",
-      "List",
-      "Purge",
-      "Recover",
-      "Restore",
-      "Sign",
-      "UnwrapKey",
-      "Update",
-      "Verify",
-      "WrapKey",
-    ]
-
-    secret_permissions = [
-      "Backup",
-      "Delete",
-      "Get",
-      "List",
-      "Purge",
-      "Recover",
-      "Restore",
-      "Set",
-    ]
-  }
+  sku_name                   = "standard"
+  rbac_authorization_enabled = true
 }
 
+# Create role assignments for Terraform to manage Key Vault
+resource "azurerm_role_assignment" "key_vault_admin" {
+  scope                = azurerm_key_vault.key_vault.id
+  role_definition_name = "Key Vault Administrator"
+  principal_id         = data.azurerm_client_config.current.object_id
+}
+
+#  Create Cloudflare TLS certificate in Key Vault
 resource "azurerm_key_vault_certificate" "cloudflare_tls" {
   name         = "cloudflare-cert"
   key_vault_id = azurerm_key_vault.key_vault.id
@@ -91,6 +55,39 @@ resource "azurerm_key_vault_certificate" "cloudflare_tls" {
     contents = file(var.tls_cert)
     password = var.tls_cert_password
   }
+}
+
+# Create RSA key in Key Vault
+resource "azurerm_key_vault_key" "linux_ssh" {
+  name         = "linux-ssh-key"
+  key_vault_id = azurerm_key_vault.key_vault.id
+  key_type     = "RSA"
+  key_size     = 2048
+
+  key_opts = [
+    "decrypt",
+    "encrypt",
+    "sign",
+    "unwrapKey",
+    "verify",
+    "wrapKey",
+  ]
+
+  rotation_policy {
+    automatic {
+      time_before_expiry = "P30D"
+    }
+
+    expire_after         = "P90D"
+    notify_before_expiry = "P29D"
+  }
+}
+
+# Export the public key as a secret (for VM use)
+resource "azurerm_key_vault_secret" "linux_ssh_pub" {
+  name         = "linux-ssh-public-key"
+  value        = azurerm_key_vault_key.linux_ssh.public_key_openssh
+  key_vault_id = azurerm_key_vault.key_vault.id
 }
 
 # Create Bastion host 

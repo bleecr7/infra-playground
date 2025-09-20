@@ -17,9 +17,14 @@ output "bastion_info" {
 
 output "key_vault_info" {
   value = {
-    name    = azurerm_key_vault.key_vault.name,
-    id      = azurerm_key_vault.key_vault.id,
+    name = azurerm_key_vault.key_vault.name,
+    id   = azurerm_key_vault.key_vault.id,
   }
+}
+
+output "linux_ssh_public_key" {
+  value     = azurerm_key_vault_secret.linux_ssh_pub.value
+  sensitive = true
 }
 
 output "iaas_vnet_info" {

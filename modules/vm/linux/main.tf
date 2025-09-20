@@ -24,6 +24,11 @@ resource "azurerm_linux_virtual_machine" "this" {
   admin_password                  = var.admin_password
   disable_password_authentication = false
 
+  admin_ssh_key {
+    username = "azureuser"
+    public_key = var.admin_ssh_key
+  }
+
   os_disk {
     name                 = "webOSDisk"
     caching              = "ReadWrite"

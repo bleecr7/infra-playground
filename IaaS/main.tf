@@ -74,6 +74,8 @@ module "web_vms" {
   subnet_id       = data.tfe_outputs.core_services.values.iaas_subnets["web-subnet"].id
   public_ip_ids   = var.unix_vm_count > 0 ? [for i in range(var.unix_vm_count) : azurerm_public_ip.web_public_ip[i].id] : null
   storage_account = azurerm_storage_account.web_storage_account
+
+  admin_ssh_key = data.tfe_outputs.core_services.values.key_vault_info["id"].linux_ssh_key
 }
 
 # Connect the security group to the network interface
