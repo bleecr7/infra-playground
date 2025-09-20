@@ -63,6 +63,11 @@ resource "azurerm_dns_a_record" "web_a_record" {
   ttl                 = 300
 }
 
+data "azurerm_key_vault_secret" "linux_ssh_key_pub" {
+  name      = "linux-ssh-pub"
+  key_vault_id = data.tfe_outputs.core_services.values.key_vault_info["id"]
+}
+
 # Create Linux VMs
 module "web_vms" {
   source          = "./../modules/vm/linux"
@@ -75,7 +80,7 @@ module "web_vms" {
   public_ip_ids   = var.unix_vm_count > 0 ? [for i in range(var.unix_vm_count) : azurerm_public_ip.web_public_ip[i].id] : null
   storage_account = azurerm_storage_account.web_storage_account
 
-  admin_ssh_key = data.tfe_outputs.core_services.values.key_vault_info["id"].linux_ssh_key
+  admin_ssh_key = data.azurerm_key_vault_secret.linux_ssh_key_pub.value
 }
 
 # Connect the security group to the network interface

@@ -22,11 +22,6 @@ output "key_vault_info" {
   }
 }
 
-output "linux_ssh_public_key" {
-  value     = azurerm_key_vault_secret.linux_ssh_pub.value
-  sensitive = true
-}
-
 output "iaas_vnet_info" {
   value = var.iaas_deploy == 1 ? {
     name          = module.iaas_vnet[0].network_name,

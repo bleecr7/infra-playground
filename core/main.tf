@@ -57,36 +57,21 @@ resource "azurerm_key_vault_certificate" "cloudflare_tls" {
   }
 }
 
-# Create RSA key in Key Vault
-resource "azurerm_key_vault_key" "linux_ssh" {
-  name         = "linux-ssh-key"
-  key_vault_id = azurerm_key_vault.key_vault.id
-  key_type     = "RSA"
-  key_size     = 2048
-
-  key_opts = [
-    "decrypt",
-    "encrypt",
-    "sign",
-    "unwrapKey",
-    "verify",
-    "wrapKey",
-  ]
-
-  rotation_policy {
-    automatic {
-      time_before_expiry = "P30D"
-    }
-
-    expire_after         = "P90D"
-    notify_before_expiry = "P29D"
-  }
+# Create RSA key and load into Key Vault
+resource "tls_private_key" "linux_ssh" {
+  algorithm = "RSA"
+  rsa_bits  = 2048
 }
 
-# Export the public key as a secret (for VM use)
+resource "azurerm_key_vault_secret" "linux_ssh" {
+  name         = "linux-ssh"
+  value        = tls_private_key.linux_ssh.private_key_pem
+  key_vault_id = azurerm_key_vault.key_vault.id
+}
+
 resource "azurerm_key_vault_secret" "linux_ssh_pub" {
-  name         = "linux-ssh-public-key"
-  value        = azurerm_key_vault_key.linux_ssh.public_key_openssh
+  name         = "linux-ssh-pub"
+  value        = tls_private_key.linux_ssh.public_key_openssh
   key_vault_id = azurerm_key_vault.key_vault.id
 }
 
