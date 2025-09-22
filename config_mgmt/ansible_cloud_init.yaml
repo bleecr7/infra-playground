@@ -10,36 +10,21 @@ yum_repos:
 package_update: true
 package_upgrade: true
 packages:
-  - python3-pip
   - git
-  - jq
-  - make
-  - dnf-plugins-core
-  - azure-cli
+  - python3-pip
 
 runcmd:
   # Enable CRB repo (needed for some Python build deps)
   - [ bash, -lc, 'sudo dnf config-manager --set-enabled crb' ]
-  
-  # Install Azure CLI from Microsoft repo
-  - [ bash, -lc, 'sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc' ]
-  - [ bash, -lc, 'sudo dnf install -y https://packages.microsoft.com/config/rhel/9.0/packages-microsoft-prod.rpm' ]
-  - [ bash, -lc, 'sudo dnf install -y azure-cli' ]
 
-  # Upgrade pip and install Ansible & dependencies
-  - [ bash, -lc, 'python3 -m pip install --upgrade pip wheel setuptools' ]
-  - [ bash, -lc, 'python3 -m pip install ansible ansible-lint molecule azure-identity azure-mgmt-resource azure-mgmt-compute azure-mgmt-network' ]
+  # Install Ansible
+  - [ bash, -lc, 'sudo yum install -y ansible']  
   - [ bash, -lc, 'ansible-galaxy collection install azure.azcollection' ]
 
   # Create working directory
-  - [ bash, -lc, 'mkdir -p /opt/ansible' ]
-  - [ bash, -lc, 'chown -R ansibleadmin:ansibleadmin /opt/ansible || true' ]
+  - [ bash, -lc, 'mkdir -p /home/ansible' ]
+  - [ bash, -lc, 'chown -R ansibleadmin:ansibleadmin /home/ansible || true' ]
 
   # Verify ansible install
   - [ bash, -lc, 'ansible --version > /var/log/ansible-version.log 2>&1' ]
   - [ bash, -lc, 'echo \"Control node bootstrap complete\" >> /var/log/ansible-bootstrap.log' ]
-
-  provisioners:
-  - type: shell
-    inline:
-    - /usr/bin/cloud-init status --wait
