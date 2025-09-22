@@ -21,7 +21,7 @@ resource "azurerm_linux_virtual_machine" "this" {
   size                  = "Standard_D2s_v3"
 
   admin_username                  = "azureuser"
-  admin_password                  = var.admin_password
+  admin_password                  = var.admin_password != null ? var.admin_password : null
   disable_password_authentication = false
 
   admin_ssh_key {
@@ -30,7 +30,7 @@ resource "azurerm_linux_virtual_machine" "this" {
   }
 
   os_disk {
-    name                 = "webOSDisk"
+    name                 = "${var.infra_type}OSDisk"
     caching              = "ReadWrite"
     storage_account_type = "Premium_LRS"
   }

@@ -5,13 +5,6 @@ module "dns" {
   rg_location = var.rg_location
 }
 
-# Create Key Vault resource group
-module "key_vault_rg" {
-  source      = "./../modules/rg"
-  rg_location = var.rg_location
-  infra_type  = "keyvault"
-}
-
 # Generate a random ID for resource naming
 module "random_id" {
   source = "./../modules/random"
@@ -23,6 +16,31 @@ data "azurerm_client_config" "current" {}
 # Get Azure Terraform service principal configuration
 data "azuread_service_principal" "current" {
   display_name = "HCP Terraform"
+}
+
+#  Create Log Analytics resource group
+module "logs_rg" {
+  source      = "./../modules/rg"
+  rg_location = var.rg_location
+  infra_type  = "logs"
+}
+
+# Create log analytics workspace
+resource "azurerm_log_analytics_workspace" "core_log" {
+  name                = "core-logs-${module.random_id.random_id}"
+  location            = var.rg_location
+  resource_group_name = module.logs_rg.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+}
+
+
+
+# Create Key Vault resource group
+module "key_vault_rg" {
+  source      = "./../modules/rg"
+  rg_location = var.rg_location
+  infra_type  = "keyvault"
 }
 
 # Create Key Vault

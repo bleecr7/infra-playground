@@ -15,6 +15,15 @@ output "bastion_info" {
   }
 }
 
+output "log_analytics_info" {
+  value = {
+    name = azurerm_log_analytics_workspace.core_log.name,
+    id   = azurerm_log_analytics_workspace.core_log.id,
+    primary_shared_key = azurerm_log_analytics_workspace.core_log.primary_shared_key
+  }
+  sensitive = true
+}
+
 output "key_vault_info" {
   value = {
     name = azurerm_key_vault.key_vault.name,
