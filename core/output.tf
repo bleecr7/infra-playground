@@ -7,18 +7,18 @@ output "dns_info" {
 }
 
 output "bastion_info" {
-  value = {
+  value = var.deploy_bastion_basic == 1 ? {
     name    = module.bastion.bastion_name,
     vnet    = module.bastion.bastion_vnet,
     vnet_id = module.bastion.bastion_vnet_id,
     rg_name = module.bastion.bastion_rg_name,
-  }
+  } : null
 }
 
 output "log_analytics_info" {
   value = {
-    name = azurerm_log_analytics_workspace.core_log.name,
-    id   = azurerm_log_analytics_workspace.core_log.id,
+    name               = azurerm_log_analytics_workspace.core_log.name,
+    id                 = azurerm_log_analytics_workspace.core_log.id,
     primary_shared_key = azurerm_log_analytics_workspace.core_log.primary_shared_key
   }
   sensitive = true

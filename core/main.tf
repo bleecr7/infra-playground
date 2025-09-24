@@ -93,13 +93,6 @@ resource "azurerm_key_vault_secret" "linux_ssh_pub" {
   key_vault_id = azurerm_key_vault.key_vault.id
 }
 
-# Create Bastion host 
-# Only used if upgrading to Basic SKU - Dev SKU does not allow Bastion VNet peering transit for now
-module "bastion" {
-  source      = "./../modules/networks/bastion"
-  rg_location = var.rg_location
-}
-
 # Create network resource group
 module "network_rg" {
   source      = "./../modules/rg"
@@ -117,28 +110,27 @@ module "iaas_vnet" {
   address_space = var.iaas_vnet_address_space
 }
 
-# Create Developer SKU Bastion host for IaaS VNet
-module "bastion_dev_iaas" {
-  count       = var.iaas_deploy == 1 ? 1 : 0
-  source      = "./../modules/networks/bastion_dev"
-  rg_name     = module.network_rg.name
+# Create Bastion host 
+# Only used if upgrading to Basic SKU - Dev SKU does not allow Bastion VNet peering transit for now
+module "bastion" {
+  count = var.deploy_bastion_basic == true ? 1 : 0
+  source      = "./../modules/networks/bastion"
   rg_location = var.rg_location
-  vnet_name   = module.iaas_vnet[0].network_name
-  vnet_id     = module.iaas_vnet[0].network_id
 }
 
 # Peer Bastion VNet with Web VNet
 resource "terraform_data" "replace_bastion_peering" {
   depends_on = [module.iaas_vnet]
-  count      = var.iaas_deploy == 1 ? 1 : 0
+  count      = (var.iaas_deploy == 1) && (var.deploy_bastion_basic == 1) ? 1 : 0
   input      = module.iaas_vnet[0].network_id
 }
 
 resource "azurerm_virtual_network_peering" "bastion_to_web" {
+  count = var.deploy_bastion_basic == true ? 1 : 0
   depends_on                = [module.iaas_vnet]
   name                      = "bastion-to-web"
-  resource_group_name       = module.bastion.bastion_rg_name
-  virtual_network_name      = module.bastion.bastion_vnet
+  resource_group_name       = module.bastion[0].bastion_rg_name
+  virtual_network_name      = module.bastion[0].bastion_vnet
   remote_virtual_network_id = module.iaas_vnet[0].network_id
 
   lifecycle {
@@ -147,11 +139,22 @@ resource "azurerm_virtual_network_peering" "bastion_to_web" {
 }
 
 resource "azurerm_virtual_network_peering" "web_to_bastion" {
+  count = var.deploy_bastion_basic == 1 ? 1 : 0
   depends_on                = [module.iaas_vnet]
   name                      = "web-to-bastion"
   resource_group_name       = module.network_rg.name
   virtual_network_name      = module.iaas_vnet[0].network_name
-  remote_virtual_network_id = module.bastion.bastion_vnet_id
+  remote_virtual_network_id = module.bastion[0].bastion_vnet_id
+}
+
+# Create Developer SKU Bastion host for IaaS VNet
+module "bastion_dev_iaas" {
+  count       = var.iaas_deploy == 1 ? 1 : 0
+  source      = "./../modules/networks/bastion_dev"
+  rg_name     = module.network_rg.name
+  rg_location = var.rg_location
+  vnet_name   = module.iaas_vnet[0].network_name
+  vnet_id     = module.iaas_vnet[0].network_id
 }
 
 # Create subnets

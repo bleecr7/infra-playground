@@ -100,7 +100,7 @@ data "template_cloudinit_config" "ansible_cloud_init" {
 
   # Main cloud-config configuration file.
   part {
-    content      = file("./../config_mgmt/ansible_cloud_init.yaml")
+    content = file("./../config_mgmt/ansible_cloud_init.yaml")
   }
 }
 
@@ -151,7 +151,7 @@ resource "azurerm_linux_virtual_machine" "ansible_vm" {
   }
 
   # Cloud-init to bootstrap ansible
-  custom_data = "${data.template_cloudinit_config.ansible_cloud_init.rendered}"
+  custom_data = data.template_cloudinit_config.ansible_cloud_init.rendered
 }
 
 # Assign the security group to the Ansible VM network interface

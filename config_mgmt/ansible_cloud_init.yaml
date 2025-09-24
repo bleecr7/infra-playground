@@ -22,9 +22,26 @@ runcmd:
   - [ bash, -lc, 'ansible-galaxy collection install azure.azcollection' ]
 
   # Create working directory
-  - [ bash, -lc, 'mkdir -p /home/ansible' ]
-  - [ bash, -lc, 'chown -R ansibleadmin:ansibleadmin /home/ansible || true' ]
+  - [ bash, -lc, 'mkdir -p /home/ansible && chown -R ansibleadmin:ansibleadmin /home/ansible' ]
 
-  # Verify ansible install
+  # Verify Ansible install
   - [ bash, -lc, 'ansible --version > /var/log/ansible-version.log 2>&1' ]
   - [ bash, -lc, 'echo \"Control node bootstrap complete\" >> /var/log/ansible-bootstrap.log' ]
+
+  # Create a folder for Github Actions runner agent
+  - [ bash, -lc, 'sudo mkdir -p /home/actions-runner && sudo chown -R ansibleadmin:ansibleadmin /home/actions-runner && cd /home/actions-runner']
+
+  # Download the latest runner package
+  - [ bash, -lc, 'curl -o ./actions-runner-linux-x64-2.328.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.328.0/actions-runner-linux-x64-2.328.0.tar.gz']
+  
+  # Validate the hash
+  - [ bash, -lc, 'echo "01066fad3a2893e63e6ca880ae3a1fad5bf9329d60e77ee15f2b97c148c3cd4e  actions-runner-linux-x64-2.328.0.tar.gz" | sha256sum -c --status']
+  
+  # Extract the installer
+  - [ bash, -lc, 'if [ $? -eq 0 ]; then tar xzf ./actions-runner-linux-x64-2.328.0.tar.gz; else echo CHECKSUM FAILED > shasum.log; fi']
+
+  # Create the runner and start the configuration
+  - [ bash, -lc, 'bash ./config.sh --url https://github.com/bleecr7/infra-playground --token ALNMCUIT7KE62DIZS7FQTBLI2MQR2']
+  
+  # Run agent
+  - [ bash, -lc, 'bash ./run.sh']
