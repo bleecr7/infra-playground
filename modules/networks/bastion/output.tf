@@ -17,3 +17,7 @@ output "bastion_vnet" {
 output "bastion_vnet_id" {
   value = module.bastion_vnet.network_id
 }
+
+output "bastion_public_ip" {
+  value = azurerm_public_ip.bastion_basic_public_ip.ip_address
+}

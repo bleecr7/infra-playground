@@ -19,3 +19,9 @@ variable "infra_type" {
   type        = string
   default     = "network"
 }
+
+variable "resource_name" {
+  description = "The name of the VNet"
+  type = string
+  default = null
+}

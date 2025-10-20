@@ -46,3 +46,9 @@ variable "tls_cert_password" {
   type        = string
   sensitive   = true
 }
+
+variable "deploy_bastion_basic" {
+  description = "Flag for whether Basic SKU Bastion is to be deployed"
+  type = number
+  default = 0
+}

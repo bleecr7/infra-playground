@@ -17,7 +17,7 @@ module "storage_rg" {
 }
 
 # Create storage account for boot diagnostics
-resource "azurerm_storage_account" "web_storage_account" {
+resource "azurerm_storage_account" "boot_storage_account" {
   name                     = "webstorage${module.random_id.random_id}"
   location                 = var.rg_location
   resource_group_name      = module.storage_rg.name
@@ -32,10 +32,19 @@ module "iaas_rg" {
   infra_type  = var.infra_type
 }
 
+# Create Ansible VM resource group
+module "ansible_rg" {
+  source      = "./../modules/rg"
+  rg_location = var.rg_location
+  infra_type  = "ansible"
+}
+
 # Create Network Security Group and rules
 locals {
   security_rules_json = file("./web_nsg_rules_linux.json")
   security_rules      = jsondecode(local.security_rules_json)
+  ansible_rules_json  = file("./ansible_nsg_rules.json")
+  ansible_rules       = jsondecode(local.ansible_rules_json)
 }
 
 module "web_nsg" {
@@ -44,6 +53,14 @@ module "web_nsg" {
   rg_name        = module.iaas_rg.name
   rg_location    = var.rg_location
   security_rules = local.security_rules
+}
+
+module "ansible_nsg" {
+  source         = "./../modules/networks/nsg"
+  infra_type     = "ansible"
+  rg_name        = module.iaas_rg.name
+  rg_location    = var.rg_location
+  security_rules = local.ansible_rules
 }
 
 # Create public IPs
@@ -63,6 +80,92 @@ resource "azurerm_dns_a_record" "web_a_record" {
   ttl                 = 300
 }
 
+# Get public SSH key from Key Vault for Linux VMs
+data "azurerm_key_vault_secret" "linux_ssh_key_pub" {
+  name         = "linux-ssh-pub"
+  key_vault_id = data.tfe_outputs.core_services.values.key_vault_info["id"]
+}
+
+# Assign a user-assigned managed identity for the Ansible VM so it can access Key Vault
+resource "azurerm_user_assigned_identity" "ansible_id" {
+  name                = "mgmt-ansible-id"
+  location            = var.rg_location
+  resource_group_name = module.ansible_rg.name
+}
+
+# Call cloud-init script for Ansible VM
+data "template_cloudinit_config" "ansible_cloud_init" {
+  gzip          = true
+  base64_encode = true
+
+  # Main cloud-config configuration file.
+  part {
+    content = file("./../config_mgmt/ansible_cloud_init.yaml")
+  }
+}
+
+# Create Ansible VM
+resource "azurerm_network_interface" "ansible_nic" {
+  name                = "ansible-nic"
+  location            = var.rg_location
+  resource_group_name = module.ansible_rg.name
+
+  ip_configuration {
+    name                          = "internal"
+    subnet_id                     = data.tfe_outputs.core_services.values.iaas_subnets["mgmt-subnet"].id
+    private_ip_address_allocation = "Dynamic"
+  }
+}
+
+resource "azurerm_linux_virtual_machine" "ansible_vm" {
+  name                            = "mgmt-ansible"
+  resource_group_name             = module.ansible_rg.name
+  location                        = var.rg_location
+  size                            = "Standard_D2s_v3"
+  admin_username                  = "ansibleadmin"
+  disable_password_authentication = true
+
+  admin_ssh_key {
+    username   = "ansibleadmin"
+    public_key = data.azurerm_key_vault_secret.linux_ssh_key_pub.value
+  }
+
+  network_interface_ids = [azurerm_network_interface.ansible_nic.id]
+
+  source_image_reference {
+    publisher = "almalinux"
+    offer     = "almalinux-x86_64"
+    sku       = "9-gen2"
+    version   = "latest"
+  }
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.ansible_id.id]
+  }
+
+  os_disk {
+    name                 = "ansibleOSdisk"
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+
+  # Cloud-init to bootstrap ansible
+  custom_data = data.template_cloudinit_config.ansible_cloud_init.rendered
+}
+
+# Assign the security group to the Ansible VM network interface
+resource "azurerm_network_interface_security_group_association" "ansible_nic_nsg" {
+  network_interface_id      = azurerm_network_interface.ansible_nic.id
+  network_security_group_id = module.ansible_nsg.nsg_id
+}
+
+resource "azurerm_role_assignment" "ansible_kv_read" {
+  scope                = data.tfe_outputs.core_services.values.key_vault_info["id"]
+  role_definition_name = "Key Vault Reader"
+  principal_id         = azurerm_user_assigned_identity.ansible_id.principal_id
+}
+
 # Create Linux VMs
 module "web_vms" {
   source          = "./../modules/vm/linux"
@@ -73,7 +176,9 @@ module "web_vms" {
   admin_password  = var.admin_password
   subnet_id       = data.tfe_outputs.core_services.values.iaas_subnets["web-subnet"].id
   public_ip_ids   = var.unix_vm_count > 0 ? [for i in range(var.unix_vm_count) : azurerm_public_ip.web_public_ip[i].id] : null
-  storage_account = azurerm_storage_account.web_storage_account
+  storage_account = azurerm_storage_account.boot_storage_account
+
+  admin_ssh_key = data.azurerm_key_vault_secret.linux_ssh_key_pub.value
 }
 
 # Connect the security group to the network interface
@@ -94,7 +199,7 @@ resource "azurerm_network_interface_security_group_association" "web_pub_IP_NSG"
 #   admin_password  = var.admin_password
 #   subnet_id       = azurerm_subnet.web_subnet.id
 #   public_ip_ids   = [for i in range(var.windows_vm_count) : azurerm_public_ip.web_public_ip.id]
-#   storage_account = azurerm_storage_account.web_storage_account
+#   storage_account = azurerm_storage_account.boot_storage_account
 #   vm_priority     = "Spot"
 #   eviction_policy = "Deallocate"
 # }

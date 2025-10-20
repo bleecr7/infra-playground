@@ -25,6 +25,11 @@ terraform {
       source  = "hashicorp/tfe"
       version = "~> 0.30"
     }
+
+    tls = {
+      source  = "hashicorp/tls"
+      version = "~> 4.0"
+    }
   }
 }
 
@@ -36,3 +41,5 @@ provider "azurerm" {
     }
   }
 }
+
+provider "tls" {}
