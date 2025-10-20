@@ -34,7 +34,26 @@ resource "azurerm_log_analytics_workspace" "core_log" {
   retention_in_days   = 30
 }
 
+module "tfstate_rg" {
+  source      = "./../modules/rg"
+  rg_location = var.rg_location
+  infra_type  = "tfstate"
+}
 
+# Cratee blob storage for Terraform state files
+resource "azurerm_storage_account" "core_storage" {
+  name = "corestorage${module.random_id.random_id}"
+  resource_group_name = module.tfstate_rg.name
+  location            = var.rg_location
+  account_tier       = "Standard"
+  account_replication_type = "LRS"
+}
+
+resource "azurerm_storage_container" "tfstate_container" {
+  name                  = "storage-container-tfstate"
+  storage_account_id = azurerm_storage_account.core_storage.id
+  container_access_type = "private"
+}
 
 # Create Key Vault resource group
 module "key_vault_rg" {
@@ -62,6 +81,13 @@ resource "azurerm_role_assignment" "key_vault_admin" {
   scope                = azurerm_key_vault.key_vault.id
   role_definition_name = "Key Vault Administrator"
   principal_id         = data.azurerm_client_config.current.object_id
+}
+
+# Create storage access key in Key Vault
+resource "azurerm_key_vault_secret" "tfstate_storage_key" {
+  name         = "tfstate-storage-key"
+  value        = azurerm_storage_account.core_storage.primary_access_key
+  key_vault_id = azurerm_key_vault.key_vault.id
 }
 
 #  Create Cloudflare TLS certificate in Key Vault

@@ -24,6 +24,21 @@ output "log_analytics_info" {
   sensitive = true
 }
 
+output "storage_account_info" {
+  value = {
+    rg_name = azurerm_storage_account.core_storage.resource_group_name,
+    name = azurerm_storage_account.core_storage.name,
+    id   = azurerm_storage_account.core_storage.id,
+  }
+}
+
+output "tfstate_storage_container_info" {
+  value = {
+    name = azurerm_storage_container.tfstate_container.name,
+    id   = azurerm_storage_container.tfstate_container.id,
+  }
+}
+
 output "key_vault_info" {
   value = {
     name = azurerm_key_vault.key_vault.name,
