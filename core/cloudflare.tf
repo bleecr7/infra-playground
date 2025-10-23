@@ -6,7 +6,7 @@ resource "cloudflare_zone" "root_domain" {
   type = "full"
 }
 
-resource "cloudflare_dns_record" "terraform_managed_resource_afd5c9cc25a270f369d697fec397c6bf_0" {
+resource "cloudflare_dns_record" "root_azure" {
   content = "azure.brandonlee.cloud"
   name    = "brandonlee.cloud"
   proxied = true
@@ -19,7 +19,7 @@ resource "cloudflare_dns_record" "terraform_managed_resource_afd5c9cc25a270f369d
   }
 }
 
-resource "cloudflare_dns_record" "terraform_managed_resource_ab9c044bc38aa5531787fe45d05de3b1_1" {
+resource "cloudflare_dns_record" "cname_domainconnect" {
   content = "_domainconnect.ss.domaincontrol.com"
   name    = "_domainconnect.brandonlee.cloud"
   proxied = true
@@ -32,7 +32,7 @@ resource "cloudflare_dns_record" "terraform_managed_resource_ab9c044bc38aa553178
   }
 }
 
-resource "cloudflare_dns_record" "terraform_managed_resource_6df4263ad8743eb5f335dd95ebc799f8_2" {
+resource "cloudflare_dns_record" "cname_www" {
   content = "brandonlee.cloud"
   name    = "www.brandonlee.cloud"
   proxied = true
@@ -45,7 +45,7 @@ resource "cloudflare_dns_record" "terraform_managed_resource_6df4263ad8743eb5f33
   }
 }
 
-resource "cloudflare_dns_record" "terraform_managed_resource_de207d68b6372b3bcc1ccc75e2229006_3" {
+resource "cloudflare_dns_record" "ns_azure_1" {
   content  = "ns1-05.azure-dns.com"
   name     = "azure.brandonlee.cloud"
   proxied  = false
@@ -56,7 +56,7 @@ resource "cloudflare_dns_record" "terraform_managed_resource_de207d68b6372b3bcc1
   settings = {}
 }
 
-resource "cloudflare_dns_record" "terraform_managed_resource_cff336ab3386f6fea492857386c7d8df_4" {
+resource "cloudflare_dns_record" "ns_azure_2" {
   content  = "ns2-05.azure-dns.net"
   name     = "azure.brandonlee.cloud"
   proxied  = false
@@ -67,7 +67,7 @@ resource "cloudflare_dns_record" "terraform_managed_resource_cff336ab3386f6fea49
   settings = {}
 }
 
-resource "cloudflare_dns_record" "terraform_managed_resource_3f08d69cb48fd870e6fd09b4e7fe2cd0_5" {
+resource "cloudflare_dns_record" "ns_domaincontrol_46" {
   content  = "ns46.domaincontrol.com"
   name     = "brandonlee.cloud"
   proxied  = false
@@ -78,7 +78,7 @@ resource "cloudflare_dns_record" "terraform_managed_resource_3f08d69cb48fd870e6f
   settings = {}
 }
 
-resource "cloudflare_dns_record" "terraform_managed_resource_123d8eb2770f842ecf266316e2fac71a_6" {
+resource "cloudflare_dns_record" "ns_domaincontrol_45" {
   content  = "ns45.domaincontrol.com"
   name     = "brandonlee.cloud"
   proxied  = false
@@ -89,7 +89,7 @@ resource "cloudflare_dns_record" "terraform_managed_resource_123d8eb2770f842ecf2
   settings = {}
 }
 
-resource "cloudflare_dns_record" "terraform_managed_resource_a25252396ea58d619fdd8beec6f213fe_7" {
+resource "cloudflare_dns_record" "txt_dmarc" {
   content  = "\"v=DMARC1; p=reject; adkim=r; aspf=r; rua=mailto:dmarc_rua@onsecureserver.net;\""
   name     = "_dmarc.brandonlee.cloud"
   proxied  = false
