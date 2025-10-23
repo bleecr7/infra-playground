@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.3.0"
+  required_version = ">= 1.10"
 
   cloud {
     organization = "brandon-lee-private-org"
@@ -16,6 +16,11 @@ terraform {
       version = "~> 4.0"
     }
 
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 5.0"
+    }
+
     random = {
       source  = "hashicorp/random"
       version = "~> 3.0"
@@ -23,7 +28,7 @@ terraform {
 
     tfe = {
       source  = "hashicorp/tfe"
-      version = "~> 0.30"
+      version = "~> 0.70"
     }
 
     tls = {
@@ -40,6 +45,10 @@ provider "azurerm" {
       recover_soft_deleted_key_vaults = true
     }
   }
+}
+
+provider "cloudflare" {
+  api_token = var.cloudflare_api_token
 }
 
 provider "tls" {}

@@ -1,3 +1,19 @@
+variable "cloudflare_account_id" {
+  description = "The Cloudflare account ID."
+  type        = string
+}
+
+variable "cloudflare_api_token" {
+  description = "The API token for Cloudflare."
+  type        = string
+  sensitive   = true 
+}
+
+variable "cloudflare_zone_id" {
+  description = "The Cloudflare zone ID."
+  type        = string
+}
+
 variable "domain_name" {
   description = "The domain name for the DNS zone."
   type        = string
