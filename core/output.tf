@@ -1,3 +1,10 @@
+output "cloudflare_zone_info" {
+  value = {
+    id   = cloudflare_zone.root_domain.id,
+    name = cloudflare_zone.root_domain.name,
+  }
+}
+
 output "dns_info" {
   value = {
     domain_name        = module.dns.domain_name,
