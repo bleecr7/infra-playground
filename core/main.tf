@@ -5,14 +5,6 @@ module "dns" {
   rg_location = var.rg_location
 }
 
-resource "cloudflare_zone" "root_domain" {
-  account = {
-    id = var.cloudflare_account_id
-  }
-  name = "brandonlee.cloud"
-  type = "full"
-}
-
 # Generate a random ID for resource naming
 module "random_id" {
   source = "./../modules/random"
