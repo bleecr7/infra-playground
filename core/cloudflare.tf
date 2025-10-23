@@ -6,18 +6,18 @@ resource "cloudflare_zone" "root_domain" {
   type = "full"
 }
 
-resource "cloudflare_dns_record" "root_azure" {
-  content = "azure.brandonlee.cloud"
-  name    = "brandonlee.cloud"
-  proxied = true
-  tags    = []
-  ttl     = 1
-  type    = "CNAME"
-  zone_id = "a289bb878c36519c99a34df2a6deb3bc"
-  settings = {
-    flatten_cname = false
-  }
-}
+# resource "cloudflare_dns_record" "root_azure" {
+#   content = "azure.brandonlee.cloud"
+#   name    = "brandonlee.cloud"
+#   proxied = true
+#   tags    = []
+#   ttl     = 1
+#   type    = "CNAME"
+#   zone_id = var.cloudflare_zone_id
+#   settings = {
+#     flatten_cname = false
+#   }
+# }
 
 resource "cloudflare_dns_record" "cname_domainconnect" {
   content = "_domainconnect.ss.domaincontrol.com"
@@ -26,7 +26,7 @@ resource "cloudflare_dns_record" "cname_domainconnect" {
   tags    = []
   ttl     = 1
   type    = "CNAME"
-  zone_id = "a289bb878c36519c99a34df2a6deb3bc"
+  zone_id = var.cloudflare_zone_id
   settings = {
     flatten_cname = false
   }
@@ -39,7 +39,7 @@ resource "cloudflare_dns_record" "cname_www" {
   tags    = []
   ttl     = 1
   type    = "CNAME"
-  zone_id = "a289bb878c36519c99a34df2a6deb3bc"
+  zone_id = var.cloudflare_zone_id
   settings = {
     flatten_cname = false
   }
@@ -52,7 +52,7 @@ resource "cloudflare_dns_record" "ns_azure_1" {
   tags     = []
   ttl      = 1
   type     = "NS"
-  zone_id  = "a289bb878c36519c99a34df2a6deb3bc"
+  zone_id  = var.cloudflare_zone_id
   settings = {}
 }
 
@@ -63,7 +63,7 @@ resource "cloudflare_dns_record" "ns_azure_2" {
   tags     = []
   ttl      = 1
   type     = "NS"
-  zone_id  = "a289bb878c36519c99a34df2a6deb3bc"
+  zone_id  = var.cloudflare_zone_id
   settings = {}
 }
 
@@ -74,7 +74,7 @@ resource "cloudflare_dns_record" "ns_domaincontrol_46" {
   tags     = []
   ttl      = 1
   type     = "NS"
-  zone_id  = "a289bb878c36519c99a34df2a6deb3bc"
+  zone_id  = var.cloudflare_zone_id
   settings = {}
 }
 
@@ -85,7 +85,7 @@ resource "cloudflare_dns_record" "ns_domaincontrol_45" {
   tags     = []
   ttl      = 1
   type     = "NS"
-  zone_id  = "a289bb878c36519c99a34df2a6deb3bc"
+  zone_id  = var.cloudflare_zone_id
   settings = {}
 }
 
@@ -96,6 +96,6 @@ resource "cloudflare_dns_record" "txt_dmarc" {
   tags     = []
   ttl      = 1
   type     = "TXT"
-  zone_id  = "a289bb878c36519c99a34df2a6deb3bc"
+  zone_id  = var.cloudflare_zone_id
   settings = {}
 }
