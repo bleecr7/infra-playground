@@ -42,6 +42,12 @@ resource "azurerm_linux_virtual_machine" "this" {
     version   = var.source_image.version
   }
 
+  plan {
+    name      = var.source_image.sku
+    publisher = var.source_image.publisher
+    product   = var.source_image.offer
+  }
+
   license_type = var.license_type
 
   priority   = var.vm_priority

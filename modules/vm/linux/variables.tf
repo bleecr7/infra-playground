@@ -138,7 +138,7 @@ variable "vm_identity_ids" {
   type        = list(string)
   default     = null
   validation {
-    condition     = (var.vm_identity_type != "UserAssigned") || (var.vm_identity_ids != null && length(var.vm_identity_ids) > 0)
+    condition     = (var.vm_identity_type != "UserAssigned") || (var.vm_identity_ids != null && try(length(var.vm_identity_ids) > 0, false))
     error_message = "The vm_identity_ids must be provided and not empty when vm_identity_type is 'UserAssigned'."
   }
 }
