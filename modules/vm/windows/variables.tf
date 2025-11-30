@@ -17,7 +17,7 @@ variable "vm_count" {
 variable "vm_size" {
   description = "The size of the virtual machine."
   type        = string
-  default     = "Standard_DS1_v2"
+  default     = "Standard_B2s"
   validation {
     condition     = contains(["Standard_B1s", "Standard_B2s", "Standard_DS1_v2", "Standard_DS2_v2"], var.vm_size)
     error_message = "The VM size must be one of: Standard_B1s, Standard_B2s, Standard_DS1_v2, Standard_DS2_v2."
@@ -40,7 +40,7 @@ variable "eviction_policy" {
   default     = "Deallocate"
   validation {
     condition     = contains(["Deallocate", "Delete"], var.eviction_policy) && var.vm_priority == "Spot" || var.vm_priority != "Spot"
-    error_message = "The eviction policy must be either 'Deallocate' or 'Delete'."
+    error_message = "The eviction policy must be either 'Deallocate' or 'Delete', and only assignable if the VM priority is 'Spot'."
   }
 }
 

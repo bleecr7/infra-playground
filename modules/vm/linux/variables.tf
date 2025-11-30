@@ -1,7 +1,6 @@
 variable "infra_type" {
   description = "The type of infrastructure being deployed, used to name resources."
   type        = string
-  default     = "IaaS"
 }
 
 variable "vm_count" {
@@ -17,10 +16,10 @@ variable "vm_count" {
 variable "vm_size" {
   description = "The size of the virtual machine."
   type        = string
-  default     = "Standard_DS1_v2"
+  default     = "Standard_B2ls_v2"
   validation {
-    condition     = contains(["Standard_B1s", "Standard_B2s", "Standard_DS1_v2", "Standard_DS2_v2"], var.vm_size)
-    error_message = "The VM size must be one of: Standard_B1s, Standard_B2s, Standard_DS1_v2, Standard_DS2_v2."
+    condition     = contains(["Standard_B2als_v2", "Standard_B2ls_v2", "Standard_DS1_v2", "Standard_DS2_v2"], var.vm_size)
+    error_message = "The VM size must be one of: Standard_B1ls_v2, Standard_B2ls_v2, Standard_DS1_v2, Standard_DS2_v2."
   }
 }
 
@@ -40,7 +39,7 @@ variable "eviction_policy" {
   default     = "Deallocate"
   validation {
     condition     = contains(["Deallocate", "Delete"], var.eviction_policy) && var.vm_priority == "Spot" || var.vm_priority != "Spot"
-    error_message = "The eviction policy must be either 'Deallocate' or 'Delete'."
+    error_message = "The eviction policy must be either 'Deallocate' or 'Delete', and only assignable if the VM priority is 'Spot'."
   }
 }
 
@@ -68,11 +67,17 @@ variable "source_image" {
     version   = string
   })
   default = {
-    publisher = "almalinux"
-    offer     = "almalinux-x86_64"
-    sku       = "9-gen2"
+    publisher = "RedHat"
+    offer     = "rhel-byos"
+    sku       = "rhel-lvm96-gen2"
     version   = "latest"
   }
+}
+
+variable "license_type" {
+  description = "The license type for the virtual machine."
+  type        = string
+  default     = "RHEL_BYOS"
 }
 
 variable "admin_password" {

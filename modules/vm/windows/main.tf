@@ -20,10 +20,10 @@ resource "azurerm_windows_virtual_machine" "this" {
   location              = var.rg_location
   resource_group_name   = var.rg_name
   network_interface_ids = [azurerm_network_interface.nic[count.index].id]
-  size                  = "Standard_D2s_v3"
+  size                  = var.vm_size
 
   os_disk {
-    name                 = "webOSDisk"
+    name                 = "${var.infra_type}OSDisk-${count.index}"
     caching              = "ReadWrite"
     storage_account_type = "Premium_LRS"
   }
@@ -35,6 +35,8 @@ resource "azurerm_windows_virtual_machine" "this" {
     version   = var.source_image.version
   }
 
+  priority = var.vm_priority
+  eviction_policy = var.vm_priority == "Spot" ? var.eviction_policy : null
   boot_diagnostics {
     storage_account_uri = var.storage_account.primary_blob_endpoint
   }
