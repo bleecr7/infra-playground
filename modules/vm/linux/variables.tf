@@ -109,7 +109,7 @@ variable "public_ip_ids" {
   type        = list(string)
   default     = null
   validation {
-    condition     = try(var.public_ip_ids == null || length(var.public_ip_ids) == var.vm_count, false)
+    condition     = var.public_ip_ids == null ? true : length(var.public_ip_ids) == var.vm_count 
     error_message = "The length of public_ip_ids must be equal to vm_count or null."
   }
 }
@@ -128,7 +128,7 @@ variable "vm_identity_type" {
   type        = string
   default     = null
   validation {
-    condition     = try(var.vm_identity_type == null || contains(["SystemAssigned", "UserAssigned", "None"], var.vm_identity_type), false)
+    condition     = var.vm_identity_type == null ? true : contains(["SystemAssigned", "UserAssigned", "None"], var.vm_identity_type)
     error_message = "The VM identity type must be either 'SystemAssigned', 'UserAssigned', 'None', or null."
   }
 }
