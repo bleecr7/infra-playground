@@ -47,6 +47,11 @@ resource "azurerm_linux_virtual_machine" "this" {
   priority   = var.vm_priority
   eviction_policy = var.vm_priority == "Spot" ? var.eviction_policy : null
 
+  identity {
+    type         = var.vm_identity_type == null ? null : var.vm_identity_type
+    identity_ids = (var.vm_identity_type != null) && (var.vm_identity_id != null) ? var.vm_identity_id : null
+  }
+
   boot_diagnostics {
     storage_account_uri = var.storage_account.primary_blob_endpoint
   }
