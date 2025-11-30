@@ -133,13 +133,13 @@ variable "vm_identity_type" {
   }
 }
 
-variable "vm_identity_id" {
-  description = "Identity ID for User Assigned Managed Identities. Required if vm_identity_type is 'UserAssigned'."
+variable "vm_identity_ids" {
+  description = "Identity IDs for User Assigned Managed Identities. Required if vm_identity_type is 'UserAssigned'."
   type        = list(string)
   default     = null
   validation {
-    condition     = (var.vm_identity_type != "UserAssigned") || (var.vm_identity_id != null && length(var.vm_identity_id) > 0)
-    error_message = "The vm_identity_id must be provided and not empty when vm_identity_type is 'UserAssigned'."
+    condition     = (var.vm_identity_type != "UserAssigned") || (var.vm_identity_ids != null && length(var.vm_identity_ids) > 0)
+    error_message = "The vm_identity_ids must be provided and not empty when vm_identity_type is 'UserAssigned'."
   }
 }
 
