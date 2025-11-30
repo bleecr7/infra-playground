@@ -6,18 +6,18 @@ resource "cloudflare_zone" "root_domain" {
   type = "full"
 }
 
-resource "cloudflare_dns_record" "root_azure" {
-  content = "azure.brandonlee.cloud"
-  name    = "brandonlee.cloud"
-  proxied = true
-  tags    = []
-  ttl     = 1
-  type    = "CNAME"
-  zone_id = "a289bb878c36519c99a34df2a6deb3bc"
-  settings = {
-    flatten_cname = false
-  }
-}
+# resource "cloudflare_dns_record" "root_azure" {
+#   content = "azure.brandonlee.cloud"
+#   name    = "brandonlee.cloud"
+#   proxied = true
+#   tags    = []
+#   ttl     = 1
+#   type    = "CNAME"
+#   zone_id = "a289bb878c36519c99a34df2a6deb3bc"
+#   settings = {
+#     flatten_cname = false
+#   }
+# }
 
 resource "cloudflare_dns_record" "cname_domainconnect" {
   content = "_domainconnect.ss.domaincontrol.com"
