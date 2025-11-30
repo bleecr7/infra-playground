@@ -74,6 +74,20 @@ variable "source_image" {
   }
 }
 
+variable "vm_plan" {
+  description = "The plan information for the virtual machine."
+  type = object({
+    publisher = string
+    offer     = string
+    sku       = string
+  })
+  default = {
+    publisher = "redhat"
+    offer     = "rhel-byos"
+    sku       = "rhel-lvm96-gen2"
+  }
+}
+
 variable "license_type" {
   description = "The license type for the virtual machine."
   type        = string

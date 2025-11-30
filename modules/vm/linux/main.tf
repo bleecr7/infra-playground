@@ -43,9 +43,9 @@ resource "azurerm_linux_virtual_machine" "this" {
   }
 
   plan {
-    name      = var.source_image.sku
-    publisher = var.source_image.publisher
-    product   = var.source_image.offer
+    publisher = var.vm_plan.publisher
+    product   = var.vm_plan.offer
+    name      = var.vm_plan.sku
   }
 
   license_type = var.license_type
