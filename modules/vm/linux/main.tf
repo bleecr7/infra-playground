@@ -49,7 +49,7 @@ resource "azurerm_linux_virtual_machine" "this" {
 
   identity {
     type         = var.vm_identity_type == null ? null : var.vm_identity_type
-    identity_ids = (var.vm_identity_type != null) && (var.vm_identity_id != null) ? var.vm_identity_id : null
+    identity_ids = (var.vm_identity_type != null) && (var.vm_identity_id != null) ? [var.vm_identity_id] : null
   }
 
   boot_diagnostics {
