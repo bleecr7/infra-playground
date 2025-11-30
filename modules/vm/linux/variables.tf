@@ -122,3 +122,37 @@ variable "storage_account" {
     error_message = "The storage account URI must not be empty."
   }
 }
+
+variable "vm_identity_type" {
+  description = "The type of managed identity assigned to the VM (e.g., 'SystemAssigned', 'UserAssigned', or 'None')."
+  type        = string
+  default     = null
+  validation {
+    condition     = var.vm_identity_type == null || contains(["SystemAssigned", "UserAssigned", "None"], var.vm_identity_type)
+    error_message = "The VM identity type must be either 'SystemAssigned', 'UserAssigned', 'None', or null."
+  }
+}
+
+variable "vm_identity_id" {
+  description = "Identity ID for User Assigned Managed Identities. Required if vm_identity_type is 'UserAssigned'."
+  type        = string
+  default     = null
+  validation {
+    condition     = (var.vm_identity_type != "UserAssigned") || (var.vm_identity_id != null && length(var.vm_identity_id) > 0)
+    error_message = "The vm_identity_id must be provided and not empty when vm_identity_type is 'UserAssigned'."
+  }
+}
+
+variable "custom_data" {
+  description = "Custom data to be passed to the VM, typically used for cloud-init scripts."
+  type        = string
+  default     = null
+}
+
+variable "vm_tags" {
+  description = "A map of tags to assign to the virtual machine."
+  type        = map(string)
+  default     = {
+    ManagedBy = "Terraform"
+  }
+}
