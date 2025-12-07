@@ -32,7 +32,7 @@ resource "azurerm_linux_virtual_machine" "this" {
   os_disk {
     name                 = "${var.infra_type}OSDisk-${count.index}"
     caching              = "ReadWrite"
-    storage_account_type = "Premium_LRS"
+    storage_account_type = "Standard_LRS"
   }
 
   source_image_reference {
@@ -61,6 +61,9 @@ resource "azurerm_linux_virtual_machine" "this" {
   boot_diagnostics {
     storage_account_uri = var.storage_account.primary_blob_endpoint
   }
+
+  # Custom cloud-init script
+  custom_data = var.custom_data
 
   provision_vm_agent = true
 }
